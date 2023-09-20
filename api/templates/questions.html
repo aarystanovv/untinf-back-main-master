@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Варианты вопросов</title>
+</head>
+<body>
+    <h1>Варианты вопросов</h1>
+
+    <form method="post">
+        {% csrf_token %}
+        {% for question in questions %}
+        <fieldset>
+            <legend>{{ forloop.counter }}. {{ question.question }}</legend>
+
+            {% if question.type == 'context' %}
+            <p>{{ question.content }}</p>
+            <img src="{{ question.content }}" alt="Изображение">
+            <ul>
+                {% for option in question.options %}
+                <li>
+                    <label>
+                        <input type="radio" name="answer_{{ question.id }}" value="{{ option }}">
+                        {{ option }}
+                    </label>
+                </li>
+                {% endfor %}
+            </ul>
+            {% elif question.type == 'single' %}
+            <ul>
+                {% for option in question.options %}
+                <li>
+                    <label>
+                        <input type="radio" name="answer_{{ question.id }}" value="{{ option }}">
+                        {{ option }}
+                    </label>
+                </li>
+                {% endfor %}
+            </ul>
+            {% elif question.type == 'multiple' %}
+            <ul>
+                {% for option in question.options %}
+                <li>
+                    <label>
+                        <input type="checkbox" name="answer_{{ question.id }}[]" value="{{ option }}">
+                        {{ option }}
+                    </label>
+                </li>
+                {% endfor %}
+            </ul>
+            {% endif %}
+            {% if question.taskContent %}
+            <p>{{ question.taskContent }}</p>
+            <img src="{{ question.taskContent }}" alt="Изображение задания"> <!-- Ссылка на изображение taskContent -->
+            {% endif %}
+        </fieldset>
+        {% endfor %}
+        <input type="submit" value="Отправить ответы">
+    </form>
+</body>
+</html>

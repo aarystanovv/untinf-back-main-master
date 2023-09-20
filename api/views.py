@@ -7,7 +7,6 @@ from rest_framework.response import Response
 from api.models import Question
 from api.serializers import QuestionSerializer
 
-
 class QuestionViewSet(viewsets.ModelViewSet):
     queryset = Question.objects.all()
     serializer_class = QuestionSerializer
@@ -34,7 +33,6 @@ class QuestionViewSet(viewsets.ModelViewSet):
 
         return Response(status=status.HTTP_302_FOUND, headers={'Location': '/'})
 
-
 def generate_question_variants(request):
     all_questions = Question.objects.all()
 
@@ -42,9 +40,24 @@ def generate_question_variants(request):
     context_questions = all_questions.filter(type="context")[:5]
     multiple_questions = all_questions.filter(type="multiple")[:10]
 
-    questions = list(single_questions) + list(context_questions) + list(multiple_questions)
+    questions = []
 
-    questions = random.sample(questions, len(questions))
+    for question in single_questions:
+        options = list(question.options)
+        random.shuffle(options)
+        question.options = options
+        questions.append(question)
 
+    for question in context_questions:
+        options = list(question.options)
+        random.shuffle(options)
+        question.options = options
+        questions.append(question)
+
+    for question in multiple_questions:
+        options = list(question.options)
+        random.shuffle(options)
+        question.options = options
+        questions.append(question)
 
     return render(request, 'questions.html', {'questions': questions})
