@@ -1,49 +1,50 @@
 import random
-
-from django.http import HttpResponse, JsonResponse
-from rest_framework import viewsets, permissions
-from rest_framework.permissions import IsAuthenticatedOrReadOnly
+from django.shortcuts import get_object_or_404, render
+from rest_framework import viewsets, status
+from rest_framework.decorators import action
 from rest_framework.response import Response
 
-from .serializers import TestSerializer, QuestionSerializer, OptionSerializer
+from api.models import Question
+from api.serializers import QuestionSerializer
 
-from .models import Test, Question, Option
-
-class TestViewSet(viewsets.ModelViewSet):
-    queryset = Test.objects.all()
-    serializer_class = TestSerializer
-    #permission_classes = [permissions.IsAdminUser]
 
 class QuestionViewSet(viewsets.ModelViewSet):
     queryset = Question.objects.all()
     serializer_class = QuestionSerializer
-    #permission_classes = [permissions.IsAdminUser]
+
+    # permission_classes = [permissions.IsAdminUser]
 
     def get_queryset(self):
         queryset = Question.objects.all()
-        topic = self.request.query_params.get('test__topic')
-        question_type = self.request.query_params.get('question_type')
-        form = self.request.query_params.get('test__form')
+        question_list = list(queryset)
+        random.shuffle(question_list)
+        return question_list
 
-        if topic:
-            queryset = queryset.filter(test__topic=topic)
+    @action(detail=False, methods=['post'])
+    def update_answers(self, request):
+        questions = Question.objects.all()
 
-        if question_type:
-            queryset = queryset.filter(question_type=question_type)
+        for question in questions:
+            if not question.answers:
+                question.answers = [question.answer]
+            else:
+                question.answers.append(question.answer)
 
-        if form:
-            queryset = queryset.filter(test__form=form)
+            question.save()
 
-        return queryset
+        return Response(status=status.HTTP_302_FOUND, headers={'Location': '/'})
 
 
-class OptionViewSet(viewsets.ModelViewSet):
-    queryset = Option.objects.all()
-    serializer_class = OptionSerializer
-    #permission_classes = [permissions.IsAdminUser]
+def generate_question_variants(request):
+    all_questions = Question.objects.all()
 
-    def list(self, request, *args, **kwargs):
-        all_options = list(Option.objects.all())
-        random.shuffle(all_options)
-        serializer = self.get_serializer(all_options, many=True)
-        return Response(serializer.data)
+    single_questions = all_questions.filter(type="single")[:20]
+    context_questions = all_questions.filter(type="context")[:5]
+    multiple_questions = all_questions.filter(type="multiple")[:10]
+
+    questions = list(single_questions) + list(context_questions) + list(multiple_questions)
+
+    questions = random.sample(questions, len(questions))
+
+
+    return render(request, 'questions.html', {'questions': questions})

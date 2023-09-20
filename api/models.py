@@ -1,42 +1,18 @@
-import uuid
 from django.db import models
-
-class Test(models.Model):
-    topic = models.CharField(max_length=100)
-    type_choices = (
-        ('Python', 'Python'),
-        ('Excel', 'Excel'),
-        ('HTML5', 'HTML5'),
-    )
-    type = models.CharField(max_length=100, choices=type_choices)
-    format_choices = (
-        ('theory', 'Theory'),
-        ('practice', 'Practice'),
-        ('simple', 'Simple'),
-    )
-    format = models.CharField(max_length=100, choices=format_choices)
-    unique_id = models.UUIDField(unique=True, default=uuid.uuid4, editable=False)
-
-    def __str__(self):
-        return self.topic
+import uuid
 
 class Question(models.Model):
-    question = models.CharField(max_length=1000)
-    content = models.URLField()
-    task = models.CharField(max_length=1000)
-    taskContent = models.URLField()
-    type = models.CharField(max_length=100)
-    topic = models.CharField(max_length=100)
-    answer = models.CharField(max_length=1000)
-    format = models.CharField(max_length=100)
+    question = models.CharField(max_length=100000)
+    options = models.JSONField()
+    content = models.URLField(null=True, blank=True)
+    task = models.CharField(max_length=10000, null=True, blank=True)
+    taskContent = models.URLField(null=True, blank=True)
+    type = models.CharField(max_length=1000)
+    topic = models.CharField(max_length=1000)
+    answer = models.CharField(max_length=10000, null=True, blank=True)
+    format = models.CharField(max_length=1000)
     unique_id = models.UUIDField(unique=True, default=uuid.uuid4, editable=False)
+    answers = models.JSONField(null=True, blank=True)
 
     def __str__(self):
         return self.question
-
-class Option(models.Model):
-    question = models.ForeignKey(Question, on_delete=models.CASCADE, related_name='options')
-    text = models.CharField(max_length=1000)
-
-    def __str__(self):
-        return self.text
