@@ -1,18 +1,17 @@
 from django.db import models
-import uuid
+from mongoengine import Document, fields
 
-class Question(models.Model):
-    question = models.CharField(max_length=100000)
-    options = models.JSONField()
-    content = models.URLField(null=True, blank=True)
-    task = models.CharField(max_length=10000, null=True, blank=True)
-    taskContent = models.URLField(null=True, blank=True)
-    type = models.CharField(max_length=1000)
-    topic = models.CharField(max_length=1000)
-    answer = models.CharField(max_length=10000, null=True, blank=True)
-    format = models.CharField(max_length=1000)
-    unique_id = models.UUIDField(unique=True, default=uuid.uuid4, editable=False)
-    answers = models.JSONField(null=True, blank=True)
+
+class Question(Document):
+    question = fields.StringField(max_length=100000, null=True)
+    content = fields.URLField(null=True)
+    task = fields.StringField(max_length=10000)
+    taskContent = fields.URLField(null=True)
+    options = fields.ListField(fields.StringField(max_length=10000))
+    answers = fields.ListField(fields.StringField(max_length=10000))
+    type = fields.StringField(max_length=1000)
+    topic = fields.ListField(fields.StringField(max_length=10000))
+    format = fields.StringField(max_length=1000)
 
     def __str__(self):
         return self.question

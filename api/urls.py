@@ -1,13 +1,17 @@
 from django.urls import include, path
 from rest_framework import routers
+from drf_spectacular.views import SpectacularAPIView, SpectacularSwaggerView
+from api.views import *
 
-from api import views
-from api.views import QuestionViewSet
-
-router = routers.DefaultRouter()
-router.register(r'questions', QuestionViewSet)
 
 urlpatterns = [
-    path('', include(router.urls)),
-    path('question_variants/', views.generate_question_variants, name='question_variants'),
+    path("schema/", SpectacularAPIView.as_view(), name="schema"),
+    path(
+        "docs/",
+        SpectacularSwaggerView.as_view(
+            template_name="swagger-ui.html", url_name="schema"
+        ),
+        name="swagger-ui",
+    ),
+    path('questions/', QuestionListView.as_view()),
 ]
