@@ -5,7 +5,7 @@ from mongoengine import Document, fields
 class Question(Document):
     question = fields.StringField(max_length=100000, null=True)
     content = fields.URLField(null=True)
-    task = fields.StringField(max_length=10000)
+    task = fields.StringField(max_length=10000, null=True)
     taskContent = fields.URLField(null=True)
     options = fields.ListField(fields.StringField(max_length=10000))
     answers = fields.ListField(fields.StringField(max_length=10000))

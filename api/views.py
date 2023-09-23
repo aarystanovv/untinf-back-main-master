@@ -12,10 +12,12 @@ class QuestionListView(APIView):
     def get(self, request):
         all_questions = Question.objects
 
-        selected_questions = all_questions[:35]
+        selected_questions = all_questions
 
         serialized_questions = []
         for question in selected_questions:
+            if question.type == "multiple":
+                continue
             serialized_question = {
                 "id": str(question.pk),
                 "question": question.question,
