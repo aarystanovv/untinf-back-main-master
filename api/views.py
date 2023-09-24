@@ -6,18 +6,42 @@ from .models import Question
 import json
 
 
-
 class QuestionListView(APIView):
 
     def get(self, request):
         all_questions = Question.objects
 
         selected_questions = all_questions
-
+        simple = 25
+        multiple = 10
         serialized_questions = []
         for question in selected_questions:
-            if question.type == "multiple":
+            if simple <= 0:
+                break
+            if question.type != "simple":
                 continue
+            simple -= 1
+
+            serialized_question = {
+                "id": str(question.pk),
+                "question": question.question,
+                "content": question.content,
+                "task": question.task,
+                "taskContent": question.taskContent,
+                "options": question.options,
+                "type": question.type,
+                "topic": question.topic,
+                "format": question.format
+            }
+            serialized_questions.append(serialized_question)
+
+        for question in selected_questions:
+            if multiple <= 0:
+                break
+            if question.type != "multiple":
+                continue
+            multiple -= 1
+
             serialized_question = {
                 "id": str(question.pk),
                 "question": question.question,
@@ -93,3 +117,79 @@ class QuestionListView(APIView):
 
         except Exception as e:
             return Response({'error': str(e)}, status=status.HTTP_400_BAD_REQUEST)
+
+
+class QuestionCheckAPIView(APIView):
+    @extend_schema(
+        request="ww",
+        examples=[
+            OpenApiExample(
+                name="Submit test",
+                value=[
+                    {"id": "650ec192065c71759465d03b",
+                     "answers": ["1000"]
+                     },
+                    {"id": "650ec192065c71759465d03c",
+                     "answers": ["1000", "300"]
+                     }
+                ],
+            ),
+        ]
+    )
+    def post(self, request):
+        data = request.data
+        score = 0
+
+        question_ids = [item['id'] for item in data]
+        questions = Question.objects(id__in=question_ids)
+        print(questions)
+
+        test = []
+        for question in data:
+            quiestion_obj = questions(id=question["id"]).first()
+            # print(quiestion_obj.answers[0])
+            # print(question["answers"][0])
+            res = 0
+            if quiestion_obj.type == "simple":
+                res += 1 if quiestion_obj.answers[0] == question["answers"][0] else 0
+            else:
+                correct_ans = len(quiestion_obj.answers)
+                selected_correct_ans = 0
+                selected_incorrect_ans = 0
+
+                for ans in question["answers"]:
+                    if ans in quiestion_obj.answers:
+                        selected_correct_ans += 1
+                    else:
+                        selected_incorrect_ans += 1
+
+                if correct_ans == 3:
+                    if selected_correct_ans == 3 and selected_incorrect_ans == 0:
+                        res += 2
+                    elif selected_correct_ans == 2 and selected_incorrect_ans <= 1:
+                        res += 1
+                if correct_ans == 2:
+                    if selected_correct_ans == 2 and selected_incorrect_ans == 0:
+                        res += 2
+                    elif selected_correct_ans == 2 and selected_incorrect_ans == 1:
+                        res += 1
+                    elif selected_correct_ans == 1 and selected_incorrect_ans <= 1:
+                        res += 1
+                else:
+                    if selected_correct_ans == 1 and selected_incorrect_ans == 0:
+                        res += 2
+                    elif selected_correct_ans == 1 and selected_incorrect_ans == 1:
+                        res += 1
+
+            score += res
+            test.append({
+                "id": question["id"],
+                "score": res,
+                "answers": question["answers"],
+                "correct_answers": quiestion_obj.answers
+            })
+
+        return Response({
+            "test": test,
+            "score": score
+        })

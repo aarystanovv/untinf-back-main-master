@@ -14,4 +14,5 @@ urlpatterns = [
         name="swagger-ui",
     ),
     path('questions/', QuestionListView.as_view()),
+    path('questions/check/', QuestionCheckAPIView.as_view()),
 ]
