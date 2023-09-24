@@ -144,7 +144,7 @@ class QuestionCheckAPIView(APIView):
 
         question_ids = [item['id'] for item in data]
         questions = Question.objects(id__in=question_ids)
-        print(questions)
+        # print(questions)
 
         test = []
         for question in data:
@@ -153,7 +153,7 @@ class QuestionCheckAPIView(APIView):
             # print(question["answers"][0])
             res = 0
             if quiestion_obj.type == "simple":
-                res += 1 if quiestion_obj.answers[0] == question["answers"][0] else 0
+                res = 1 if quiestion_obj.answers[0] == question["answers"][0] else 0
             else:
                 correct_ans = len(quiestion_obj.answers)
                 selected_correct_ans = 0
@@ -167,21 +167,27 @@ class QuestionCheckAPIView(APIView):
 
                 if correct_ans == 3:
                     if selected_correct_ans == 3 and selected_incorrect_ans == 0:
-                        res += 2
+                        res = 2
                     elif selected_correct_ans == 2 and selected_incorrect_ans <= 1:
-                        res += 1
-                if correct_ans == 2:
+                        res = 1
+                    else:
+                        res = 0
+                elif correct_ans == 2:
                     if selected_correct_ans == 2 and selected_incorrect_ans == 0:
-                        res += 2
+                        res = 2
                     elif selected_correct_ans == 2 and selected_incorrect_ans == 1:
-                        res += 1
+                        res = 1
                     elif selected_correct_ans == 1 and selected_incorrect_ans <= 1:
-                        res += 1
-                else:
+                        res = 1
+                    else:
+                        res = 0
+                elif correct_ans == 1:
                     if selected_correct_ans == 1 and selected_incorrect_ans == 0:
-                        res += 2
+                        res = 2
                     elif selected_correct_ans == 1 and selected_incorrect_ans == 1:
-                        res += 1
+                        res = 1
+                    else:
+                        res = 0
 
             score += res
             test.append({
