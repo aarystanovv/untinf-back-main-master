@@ -1,3 +1,5 @@
+import random
+
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import status
@@ -9,8 +11,8 @@ import json
 class QuestionListView(APIView):
 
     def get(self, request):
-        all_questions = Question.objects
-
+        all_questions = list(Question.objects)
+        random.shuffle(all_questions)
         selected_questions = all_questions
         simple = 25
         multiple = 10
