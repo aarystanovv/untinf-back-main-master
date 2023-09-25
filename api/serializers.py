@@ -1,3 +1,5 @@
+import random
+
 from rest_framework import serializers
 from .models import Question
 from bson import ObjectId
@@ -27,4 +29,6 @@ class QuestionSerializer(serializers.Serializer):
     def to_representation(self, instance):
         data = super().to_representation(instance)
         data.pop('answers', None)
+        options = data.get('options')
+        random.shuffle(options)
         return data
