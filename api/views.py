@@ -13,17 +13,11 @@ class QuestionListView(APIView):
     def get(self, request):
         all_questions = list(Question.objects)
         random.shuffle(all_questions)
-        selected_questions = all_questions
-        simple = 25
-        multiple = 10
-        serialized_questions = []
-        for question in selected_questions:
-            if simple <= 0:
-                break
-            if question.type != "simple":
-                continue
-            simple -= 1
 
+        simple_questions = []
+        multiple_choice_questions = []
+
+        for question in all_questions:
             serialized_question = {
                 "id": str(question.pk),
                 "question": question.question,
@@ -35,29 +29,16 @@ class QuestionListView(APIView):
                 "topic": question.topic,
                 "format": question.format
             }
-            serialized_questions.append(serialized_question)
 
-        for question in selected_questions:
-            if multiple <= 0:
+            if question.type == "simple" and len(simple_questions) < 25:
+                simple_questions.append(serialized_question)
+            elif question.type == "multiple" and len(multiple_choice_questions) < 10:
+                multiple_choice_questions.append(serialized_question)
+
+            if len(simple_questions) == 25 and len(multiple_choice_questions) == 10:
                 break
-            if question.type != "multiple":
-                continue
-            multiple -= 1
 
-            serialized_question = {
-                "id": str(question.pk),
-                "question": question.question,
-                "content": question.content,
-                "task": question.task,
-                "taskContent": question.taskContent,
-                "options": question.options,
-                "type": question.type,
-                "topic": question.topic,
-                "format": question.format
-            }
-            serialized_questions.append(serialized_question)
-
-        response_data = {"questions": serialized_questions}
+        response_data = {"questions": simple_questions + multiple_choice_questions}
         return Response(response_data)
 
     @extend_schema(
