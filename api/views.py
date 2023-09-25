@@ -122,6 +122,19 @@ class QuestionListView(APIView):
 
 
 class QuestionCheckAPIView(APIView):
+    score_mapping = {
+        # {1}(correct_ans),{2}(select_correct_ans),{3}(select_incorrect_ans): (score)
+        (3, 3, 0): 2,
+        (3, 2, 1): 1,
+        (3, 2, 0): 1,
+        (2, 2, 0): 2,
+        (2, 2, 1): 1,
+        (2, 1, 0): 1,
+        (2, 1, 1): 1,
+        (1, 1, 0): 2,
+        (1, 1, 1): 1,
+    }
+
     @extend_schema(
         request="ww",
         examples=[
@@ -140,61 +153,45 @@ class QuestionCheckAPIView(APIView):
     )
     def post(self, request):
         data = request.data
-        score = 0
-
         question_ids = [item['id'] for item in data]
+
         questions = Question.objects(id__in=question_ids)
-        # print(questions)
+        question_dict = {str(question.id): question for question in questions}
 
         test = []
-        for question in data:
-            quiestion_obj = questions(id=question["id"]).first()
-            # print(quiestion_obj.answers[0])
-            # print(question["answers"][0])
-            res = 0
-            if quiestion_obj.type == "simple":
-                res = 1 if quiestion_obj.answers[0] == question["answers"][0] else 0
+        score = 0
+
+        for question_data in data:
+            question_id = str(question_data["id"])
+            question_obj = question_dict.get(question_id)
+
+            if not question_obj:
+                continue
+
+            user_answers = set(question_data["answers"])
+            correct_answers = set(question_obj.answers)
+
+            if question_obj.type == "simple":
+                score_value = 1 if user_answers == correct_answers else 0
             else:
-                correct_ans = len(quiestion_obj.answers)
                 selected_correct_ans = 0
                 selected_incorrect_ans = 0
-
-                for ans in question["answers"]:
-                    if ans in quiestion_obj.answers:
+                for ans in user_answers:
+                    if ans in correct_answers:
                         selected_correct_ans += 1
                     else:
                         selected_incorrect_ans += 1
 
-                if correct_ans == 3:
-                    if selected_correct_ans == 3 and selected_incorrect_ans == 0:
-                        res = 2
-                    elif selected_correct_ans == 2 and selected_incorrect_ans <= 1:
-                        res = 1
-                    else:
-                        res = 0
-                elif correct_ans == 2:
-                    if selected_correct_ans == 2 and selected_incorrect_ans == 0:
-                        res = 2
-                    elif selected_correct_ans == 2 and selected_incorrect_ans == 1:
-                        res = 1
-                    elif selected_correct_ans == 1 and selected_incorrect_ans <= 1:
-                        res = 1
-                    else:
-                        res = 0
-                elif correct_ans == 1:
-                    if selected_correct_ans == 1 and selected_incorrect_ans == 0:
-                        res = 2
-                    elif selected_correct_ans == 1 and selected_incorrect_ans == 1:
-                        res = 1
-                    else:
-                        res = 0
+                score_value = self.score_mapping.get(
+                    (len(correct_answers), selected_correct_ans, selected_incorrect_ans), 0)
 
-            score += res
+            score += score_value
+
             test.append({
-                "id": question["id"],
-                "score": res,
-                "answers": question["answers"],
-                "correct_answers": quiestion_obj.answers
+                "id": question_id,
+                "score": score_value,
+                "answers": list(user_answers),
+                "correct_answers": list(correct_answers)
             })
 
         return Response({
